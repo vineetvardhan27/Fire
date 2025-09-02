@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIRE Calculator (₹)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #0a2540;
+            --secondary-color: #f6a42d;
+            --background-color: #f6f9fc;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 992px) {
+            .container {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+
+        .controls-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+        
+        .card-header .icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .tooltip-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        .tooltip-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #ccc;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+            line-height: 16px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        
+        .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: 300;
+        }
+        
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: 5px 10px;
+        }
+
+        .input-group span {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider-group input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            border-radius: 5px;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--secondary-color);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .slider-group .slider-value {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            background: var(--background-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .result-item h3 {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 400;
+        }
+
+        .result-item p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        #summary-sentence {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 25px;
+            padding: 15px;
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #003a8c;
+            border-radius: var(--border-radius);
+        }
+        
+        #summary-sentence span {
+            color: #d46b08;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        #progress-bar {
+            width: 0%;
+            height: 25px;
+            background-color: var(--secondary-color);
+            text-align: center;
+            line-height: 25px;
+            color: white;
+            border-radius: var(--border-radius);
+            transition: width 0.5s ease-in-out;
+            font-weight: 600;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            min-height: 300px;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .results-grid { grid-template-columns: 1fr 1fr; }
+            .result-item p { font-size: 1.2rem; }
+            #summary-sentence { font-size: 1rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="controls-column">
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">💰</span>
+                    <h2>Your Financial Snapshot</h2>
+                </div>
+                <div class="form-group">
+                    <label for="currentAge">Current Age</label>
+                    <div class="input-group">
+                        <input type="number" id="currentAge" value="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="annualIncome">Current Annual Take-Home Income</label>
+                    <div class="input-group">
+                        <span>₹</span>
+                        <input type="number" id="annualIncome" value="1500000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="annualExpenses">Current Annual Expenses</label>
+                    <div class="input-group">
+                        <span>₹</span>
+                        <input type="number" id="annualExpenses" value="800000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="investedAssets">Current Invested Assets</label>
+                    <div class="input-group">
+                        <span>₹</span>
+                        <input type="number" id="investedAssets" value="2500000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">⚙️</span>
+                    <h2>Assumptions</h2>
+                </div>
+                <div class="form-group">
+                    <label for="investmentReturn">Pre-Retirement Annual Investment Return</label>
+                    <div class="slider-group">
+                        <input type="range" id="investmentReturn" min="1" max="20" value="10" step="0.5">
+                        <span class="slider-value" id="investmentReturnValue">10%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="swr">Post-Retirement Safe Withdrawal Rate (SWR) 
+                        <div class="tooltip-container">
+                          <span class="tooltip-icon">?</span>
+                          <span class="tooltip-text">The percentage of your portfolio you can withdraw annually in retirement without running out of money. 4% is a common rule of thumb.</span>
+                        </div>
+                    </label>
+                    <div class="slider-group">
+                        <input type="range" id="swr" min="1" max="7" value="4" step="0.1">
+                        <span class="slider-value" id="swrValue">4%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inflation">Expected Annual Inflation Rate</label>
+                    <div class="slider-group">
+                        <input type="range" id="inflation" min="1" max="10" value="6" step="0.1">
+                        <span class="slider-value" id="inflationValue">6%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-column">
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">🎯</span>
+                    <h2>Your Path to FIRE</h2>
+                </div>
+                <h3>Progress to FIRE Number</h3>
+                <div class="progress-container">
+                    <div id="progress-bar">0%</div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h3>Your FIRE Number</h3>
+                        <p id="fireNumberResult">₹0</p>
+                    </div>
+                    <div class="result-item">
+                        <h3>Annual Savings</h3>
+                        <p id="annualSavingsResult">₹0</p>
+                    </div>
+                    <div class="result-item">
+                        <h3>Savings Rate</h3>
+                        <p id="savingsRateResult">0%</p>
+                    </div>
+                     <div class="result-item">
+                        <h3>Years Until FIRE</h3>
+                        <p id="yearsUntilFireResult">0</p>
+                    </div>
+                </div>
+
+                <div class="result-item" style="background-color: var(--primary-color); color: white; margin-top: 10px;">
+                    <h3 style="color: #ccc;">Projected FIRE Age</h3>
+                    <p id="fireAgeResult" style="color: white;">0</p>
+                </div>
+                
+                <p id="summary-sentence">Enter your details to see your projection.</p>
+
+                <div class="chart-container">
+                    <canvas id="fireChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- DOM ELEMENTS ---
+    const inputs = {
+        currentAge: document.getElementById('currentAge'),
+        annualIncome: document.getElementById('annualIncome'),
+        annualExpenses: document.getElementById('annualExpenses'),
+        investedAssets: document.getElementById('investedAssets'),
+        investmentReturn: document.getElementById('investmentReturn'),
+        swr: document.getElementById('swr'),
+        inflation: document.getElementById('inflation'),
+    };
+
+    const outputs = {
+        investmentReturnValue: document.getElementById('investmentReturnValue'),
+        swrValue: document.getElementById('swrValue'),
+        inflationValue: document.getElementById('inflationValue'),
+        fireNumberResult: document.getElementById('fireNumberResult'),
+        annualSavingsResult: document.getElementById('annualSavingsResult'),
+        savingsRateResult: document.getElementById('savingsRateResult'),
+        yearsUntilFireResult: document.getElementById('yearsUntilFireResult'),
+        fireAgeResult: document.getElementById('fireAgeResult'),
+        progressBar: document.getElementById('progress-bar'),
+        summarySentence: document.getElementById('summary-sentence'),
+    };
+
+    const chartCanvas = document.getElementById('fireChart');
+    let fireChart;
+
+    // --- FORMATTING HELPER ---
+    const formatToRupee = (num) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(num);
+    };
+
+    // --- CALCULATION LOGIC ---
+    function calculateFIRE() {
+        // Parse all input values to numbers
+        const currentAge = parseInt(inputs.currentAge.value) || 0;
+        const annualIncome = parseFloat(inputs.annualIncome.value) || 0;
+        const annualExpenses = parseFloat(inputs.annualExpenses.value) || 0;
+        const investedAssets = parseFloat(inputs.investedAssets.value) || 0;
+        const investmentReturn = parseFloat(inputs.investmentReturn.value) / 100;
+        const swr = parseFloat(inputs.swr.value) / 100;
+        // Not using inflation in this simplified model for FIRE number, but kept for future use.
+        // const inflation = parseFloat(inputs.inflation.value) / 100;
+
+        // 1. Calculate Core Metrics
+        const annualSavings = annualIncome - annualExpenses;
+        const savingsRate = annualIncome > 0 ? (annualSavings / annualIncome) * 100 : 0;
+        const fireNumber = swr > 0 ? annualExpenses / swr : 0;
+        const progress = fireNumber > 0 ? (investedAssets / fireNumber) * 100 : 0;
+
+        // 2. Calculate Projected FIRE Age (Iterative approach)
+        let projectedAge = currentAge;
+        let years = 0;
+        let futureValue = investedAssets;
+        const MAX_YEARS = 70; // Failsafe to prevent infinite loops
+
+        if (annualSavings > 0 && futureValue < fireNumber) {
+            for (let i = 1; i <= MAX_YEARS; i++) {
+                futureValue += futureValue * investmentReturn; // Compounding existing assets
+                futureValue += annualSavings; // Adding new savings
+                years = i;
+                if (futureValue >= fireNumber) {
+                    projectedAge = currentAge + years;
+                    break;
+                }
+            }
+             if (futureValue < fireNumber) { // If still not reached after max years
+                projectedAge = "N/A";
+                years = "N/A";
+            }
+        } else if (futureValue >= fireNumber) {
+            years = 0;
+            projectedAge = currentAge;
+        } else {
+             projectedAge = "N/A";
+             years = "N/A";
+        }
+
+
+        // 3. Display Results
+        outputs.fireNumberResult.textContent = formatToRupee(fireNumber);
+        outputs.annualSavingsResult.textContent = formatToRupee(annualSavings);
+        outputs.savingsRateResult.textContent = `${savingsRate.toFixed(1)}%`;
+        outputs.yearsUntilFireResult.textContent = years;
+        outputs.fireAgeResult.textContent = projectedAge;
+
+        // Update Progress Bar
+        const progressClamped = Math.min(100, progress);
+        outputs.progressBar.style.width = `${progressClamped}%`;
+        outputs.progressBar.textContent = `${progress.toFixed(0)}%`;
+
+        // Update Summary Sentence
+        if (projectedAge !== "N/A" && projectedAge > currentAge) {
+             outputs.summarySentence.innerHTML = `You are on track to reach Financial Independence in <span>${years} years</span> at age <span>${projectedAge}</span> with a portfolio of <span>${formatToRupee(fireNumber)}</span>.`;
+        } else if (projectedAge === currentAge) {
+             outputs.summarySentence.innerHTML = `Congratulations! You've already reached your FIRE number of <span>${formatToRupee(fireNumber)}</span>.`;
+        }
+        else {
+             outputs.summarySentence.innerHTML = `Based on your current savings rate, reaching your FIRE number isn't achievable. Try increasing your income or savings.`;
+        }
+        
+        // 4. Update Chart
+        updateChart(currentAge, investedAssets, annualSavings, investmentReturn, fireNumber, years);
+    }
+    
+    // --- CHART LOGIC ---
+    function updateChart(startAge, startAssets, annualSavings, invReturn, fireNumber, yearsToFire) {
+        const labels = [];
+        const portfolioData = [];
+        const fireLineData = [];
+
+        let currentValue = startAssets;
+        const calculationYears = yearsToFire === "N/A" ? 40 : Math.max(10, parseInt(yearsToFire) + 5);
+
+        for (let i = 0; i <= calculationYears; i++) {
+            const age = startAge + i;
+            labels.push(age);
+            
+            if (i > 0) {
+                 currentValue += currentValue * invReturn;
+                 currentValue += annualSavings;
+            }
+            portfolioData.push(currentValue);
+            
+            fireLineData.push(fireNumber);
+        }
+
+        if (fireChart) {
+            fireChart.destroy();
+        }
+
+        fireChart = new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Investment Growth',
+                    data: portfolioData,
+                    borderColor: 'rgba(10, 37, 64, 1)',
+                    backgroundColor: 'rgba(10, 37, 64, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }, {
+                    label: 'Your FIRE Number',
+                    data: fireLineData,
+                    borderColor: 'rgba(246, 164, 45, 1)',
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return formatToRupee(value);
+                            }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Age'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${formatToRupee(context.raw)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- EVENT LISTENERS ---
+    Object.values(inputs).forEach(input => {
+        input.addEventListener('input', () => {
+            // Update slider text values
+            if (input.type === 'range') {
+                document.getElementById(`${input.id}Value`).textContent = `${input.value}%`;
+            }
+            calculateFIRE();
+        });
+    });
+
+    // --- INITIAL CALCULATION ---
+    window.addEventListener('load', calculateFIRE);
+
+</script>
+</body>
+</html>
