@@ -1,4 +1,4 @@
-# FIRE King Calculator
+# FIRE Calculator
 
 A modern, interactive web app to help you plan your path to Financial Independence and Early Retirement (FIRE).
 
